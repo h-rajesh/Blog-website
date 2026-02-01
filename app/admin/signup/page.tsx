@@ -91,7 +91,7 @@ export default function SignupPage() {
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-400 to-fuchsia-500 rounded-full mb-4 shadow-lg">
               <Sparkles className="text-white w-8 h-8" />
             </div>
-            <h2 className="text-3xl font-bold text-white mb-2">Super Admin</h2>
+            <h2 className="text-3xl font-bold text-white mb-2">Hey Blogger</h2>
             <p className="text-purple-200 text-sm">
               Create your secure account
             </p>

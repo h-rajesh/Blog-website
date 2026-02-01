@@ -15,6 +15,7 @@ export const createUser = (data: {
   email: string;
   password?: string;
   image?: string;
+  bio?:string
 }) => {
   return prisma.user.create({ data });
 };

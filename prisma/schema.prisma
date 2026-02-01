@@ -14,12 +14,13 @@ model User {
   emailVerified  DateTime?
   image          String?   // profile picture
   password       String?
-  bio            String?   // optional user bio
+  bio            String?
+
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  // Relations
   blogs          Blog[]
+  posts          Post[]     // 🔥 user authored posts
   comments       Comment[]
   likedPosts     PostLike[]
   favoritePosts  PostFavorite[]
@@ -30,11 +31,12 @@ model Blog {
   title       String
   description String
   published   Boolean   @default(false)
+
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   authorID    Int
-  author      User      @relation(fields: [authorID], references: [id])
+  author      User      @relation(fields: [authorID], references: [id], onDelete: Cascade)
 
   posts       Post[]
 }
@@ -42,18 +44,23 @@ model Blog {
 model Post {
   id          Int       @id @default(autoincrement())
   content     String
-  image       String?   // optional image for the post
+  image       String?
   published   Boolean   @default(true)
+
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   blogID      Int
-  blog        Blog      @relation(fields: [blogID], references: [id])
+  blog        Blog      @relation(fields: [blogID], references: [id], onDelete: Cascade)
 
-  // Relations
+  authorID    Int
+  author      User      @relation(fields: [authorID], references: [id], onDelete: Cascade)
+
   comments    Comment[]
   likes       PostLike[]
   favorites   PostFavorite[]
+
+  @@index([createdAt])
 }
 
 model Comment {
@@ -62,30 +69,30 @@ model Comment {
   createdAt   DateTime  @default(now())
 
   postID      Int
-  post        Post      @relation(fields: [postID], references: [id])
+  post        Post      @relation(fields: [postID], references: [id], onDelete: Cascade)
 
   authorID    Int
-  author      User      @relation(fields: [authorID], references: [id])
+  author      User      @relation(fields: [authorID], references: [id], onDelete: Cascade)
 }
 
 model PostLike {
-  id       Int   @id @default(autoincrement())
   userID   Int
   postID   Int
+  createdAt DateTime @default(now())
 
-  user     User  @relation(fields: [userID], references: [id])
-  post     Post  @relation(fields: [postID], references: [id])
+  user     User  @relation(fields: [userID], references: [id], onDelete: Cascade)
+  post     Post  @relation(fields: [postID], references: [id], onDelete: Cascade)
 
-  @@unique([userID, postID]) // prevents duplicate likes
+  @@id([userID, postID])
 }
 
 model PostFavorite {
-  id       Int   @id @default(autoincrement())
   userID   Int
   postID   Int
+  createdAt DateTime @default(now())
 
-  user     User  @relation(fields: [userID], references: [id])
-  post     Post  @relation(fields: [postID], references: [id])
+  user     User  @relation(fields: [userID], references: [id], onDelete: Cascade)
+  post     Post  @relation(fields: [postID], references: [id], onDelete: Cascade)
 
-  @@unique([userID, postID]) // prevents duplicate favorites
+  @@id([userID, postID])
 }
