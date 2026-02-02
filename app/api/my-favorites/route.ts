@@ -1,0 +1,29 @@
+import { NextResponse } from "next/server";
+import { getSession } from "@/lib/auth";
+import { getFavoriteBlogs } from "@/services/favoriteService";
+
+export async function GET() {
+  try {
+    // Get the current session/user
+    const session = await getSession();
+    
+    // Check if user is authenticated
+    if (!session?.user?.id) {
+      return NextResponse.json({ msg: "Unauthorized" }, { status: 401 });
+    }
+
+    // Get blogs that contain posts favorited by the current logged-in user
+    const userId = Number(session.user.id);
+    const blogs = await getFavoriteBlogs(userId);
+    
+    // Return the user's favorite blogs
+    return NextResponse.json(blogs);
+  } catch (error) {
+    console.error("Error fetching favorite blogs:", error);
+    return NextResponse.json(
+      { msg: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+

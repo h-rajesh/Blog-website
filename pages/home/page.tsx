@@ -3,6 +3,7 @@
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { Heart, Star } from "lucide-react";
 
 type Blog = {
   id: number;
@@ -81,13 +82,13 @@ export default function Home({ userId }: { userId: number }) {
 
                   <div className="flex gap-4 text-purple-300">
                     <button className="hover:text-white transition">
-                      Like
+                     <Heart/> Like
                     </button>
                     <button className="hover:text-white transition">
                       Comment
                     </button>
                     <button className="hover:text-white transition">
-                      Favorite
+                     <Star/> Favorite
                     </button>
                   </div>
                 </motion.div>

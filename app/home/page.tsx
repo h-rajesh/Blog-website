@@ -4,6 +4,7 @@ import DashboardLayout from "@/layouts/DashboardLayout";
 import PostBlogPanel from "@/components/PostBlogPanel"; // import the panel
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { Heart } from "lucide-react";
 
 type Blog = {
   id: number;
@@ -20,6 +21,7 @@ export default function Home({ userId }: { userId: number }) {
   );
   const [exploreBlogs, setExploreBlogs] = useState<Blog[]>([]);
   const [myBlogs, setMyBlogs] = useState<Blog[]>([]);
+  const [favoriteBlogs, setFavoriteBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0); // triggers reload
   const [panelOpen, setPanelOpen] = useState(false);
@@ -28,7 +30,10 @@ export default function Home({ userId }: { userId: number }) {
   // Fetch Explore Blogs
   const loadExplore = async () => {
     try {
-      const res = await fetch("/api/blogs", { cache: "no-store" });
+      const res = await fetch("/api/blogs", { 
+        cache: "no-store",
+        credentials: "include",
+      });
       const data = await res.json();
       setExploreBlogs(data);
     } catch (err) {
@@ -39,7 +44,10 @@ export default function Home({ userId }: { userId: number }) {
   // Fetch My Blogs
   const loadMyBlogs = async () => {
     try {
-      const res = await fetch("/api/my-blogs", { cache: "no-store" });
+      const res = await fetch("/api/my-blogs", { 
+        cache: "no-store",
+        credentials: "include",
+      });
       const data = await res.json();
       setMyBlogs(data);
     } catch (err) {
@@ -47,30 +55,60 @@ export default function Home({ userId }: { userId: number }) {
     }
   };
 
-  // Load both
+  // Fetch Favorite Blogs
+  const loadFavoriteBlogs = async () => {
+    try {
+      const res = await fetch("/api/my-favorites", { 
+        cache: "no-store",
+        credentials: "include",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFavoriteBlogs(data);
+      } else {
+        console.error("Failed to load favorite blogs");
+        setFavoriteBlogs([]);
+      }
+    } catch (err) {
+      console.error(err);
+      setFavoriteBlogs([]);
+    }
+  };
+
+  // Load all data
   useEffect(() => {
     const loadAll = async () => {
       setLoading(true);
-      await Promise.all([loadExplore(), loadMyBlogs()]);
+      await Promise.all([
+        loadExplore(), 
+        loadMyBlogs(), 
+        loadFavoriteBlogs()
+      ]);
       setLoading(false);
     };
     loadAll();
   }, [refreshKey]);
 
-  // Decide which blogs to show
-  const filteredBlogs =
-    activeTab === "your"
-      ? myBlogs
-      : activeTab === "favorite"
-        ? exploreBlogs.filter((b) => b.isFavorite)
-        : exploreBlogs;
+  // Note: Tab data is loaded in the main useEffect above
+  // This ensures all data is available when switching tabs
 
   return (
     <>
       <DashboardLayout userId={userId}>
         {(activeTabFromLayout: "explore" | "your" | "favorite") => {
-          // Use activeTab from layout if available
-          const tab = activeTabFromLayout || activeTab;
+          // Sync activeTab with layout's activeTab
+          if (activeTabFromLayout !== activeTab) {
+            setActiveTab(activeTabFromLayout);
+          }
+          const tab = activeTabFromLayout;
+
+          // Decide which blogs to show based on current tab
+          const filteredBlogs =
+            tab === "your"
+              ? myBlogs
+              : tab === "favorite"
+                ? favoriteBlogs
+                : exploreBlogs;
 
           return (
             <div>
@@ -101,63 +139,71 @@ export default function Home({ userId }: { userId: number }) {
               {/* Loading / Empty */}
               {loading && <p className="text-purple-300">Loading...</p>}
               {!loading && filteredBlogs.length === 0 && (
-                <p className="text-purple-300">No blogs to display.</p>
+                <p className="text-purple-300">
+                  {tab === "your"
+                    ? "You haven't created any blogs yet."
+                    : tab === "favorite"
+                      ? "You haven't favorited any blogs yet."
+                      : "No blogs to display."}
+                </p>
               )}
 
               {/* Blog List */}
-              <div className="flex flex-col gap-6">
-                {filteredBlogs.map((blog) => (
-                  <motion.div
-                    key={blog.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-[0_0_20px_rgba(185,131,255,0.15)]"
-                  >
-                    {/* Author */}
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-10 h-10 bg-purple-500/40 rounded-full flex items-center justify-center text-white font-bold">
-                        {blog.author.name[0]}
+              {!loading && filteredBlogs.length > 0 && (
+                <div className="flex flex-col gap-6">
+                  {filteredBlogs.map((blog) => (
+                    <motion.div
+                      key={blog.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-[0_0_20px_rgba(185,131,255,0.15)]"
+                    >
+                      {/* Author */}
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 bg-purple-500/40 rounded-full flex items-center justify-center text-white font-bold">
+                          {blog.author?.name?.[0] || "?"}
+                        </div>
+                        <span className="font-semibold text-purple-200">
+                          {blog.author?.name || "Anonymous"}
+                        </span>
                       </div>
-                      <span className="font-semibold text-purple-200">
-                        {blog.author.name}
-                      </span>
-                    </div>
 
-                    {/* Blog */}
-                    <h3 className="text-purple-100 font-semibold mb-2">
-                      {blog.title}
-                    </h3>
-                    <p className="text-purple-200 mb-4">{blog.description}</p>
+                      {/* Blog */}
+                      <h3 className="text-purple-100 font-semibold mb-2">
+                        {blog.title}
+                      </h3>
+                      <p className="text-purple-200 mb-4">{blog.description}</p>
 
-                    {/* Actions */}
-                    <div className="flex gap-6 text-purple-300 text-sm">
-                      <button className="hover:text-white transition">
-                        Like
-                      </button>
-                      <button className="hover:text-white transition">
-                        Comment
-                      </button>
-                      <button className="hover:text-white transition">
-                        Favorite
-                      </button>
-
-                      {/* Edit button for your blogs */}
-                      {tab === "your" && (
-                        <button
-                          className="hover:text-white transition"
-                          onClick={() => {
-                            setEditBlog(blog);
-                            setPanelOpen(true);
-                          }}
-                        >
-                          Edit
+                      {/* Actions */}
+                      <div className="flex gap-6 text-purple-300 text-sm">
+                        <button className="hover:text-white transition">
+                          <Heart /> <span> Like</span>
                         </button>
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
+                        <button className="hover:text-white transition">
+                          Comment
+                        </button>
+                        <button className="hover:text-white transition">
+                          Favorite
+                        </button>
+
+                        {/* Edit button for your blogs */}
+                        {tab === "your" && (
+                          <button
+                            className="hover:text-white transition"
+                            onClick={() => {
+                              setEditBlog(blog);
+                              setPanelOpen(true);
+                            }}
+                          >
+                            Edit
+                          </button>
+                        )}
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
             </div>
           );
         }}

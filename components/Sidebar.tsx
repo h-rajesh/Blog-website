@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { BookOpen, User, Star, Plus } from "lucide-react";
-
 interface SidebarProps {
   activeTab: "explore" | "your" | "favorite";
   setActiveTab: (tab: "explore" | "your" | "favorite") => void;
@@ -16,6 +15,7 @@ export default function Sidebar({
   onPostClick,
 }: SidebarProps) {
   const [open, setOpen] = useState(true);
+
 
   return (
     <>
@@ -38,9 +38,8 @@ export default function Sidebar({
               <BookOpen /> Explore Blogs
             </button>
             <button
-              className={`flex items-center gap-3 p-3 rounded-lg transition ${
-                activeTab === "your" ? "bg-white/20" : "hover:bg-white/10"
-              }`}
+              className={`flex items-center gap-3 p-3 rounded-lg transition ${activeTab === "your" ? "bg-white/20" : "hover:bg-white/10"
+                }`}
               onClick={() => setActiveTab("your")}
             >
               <User /> Your Blogs
